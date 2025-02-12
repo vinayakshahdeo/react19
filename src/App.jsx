@@ -3,13 +3,16 @@ import './App.css'
 import Search from './components/Search';
 import Spinner from './components/spinner';
 import MovieCard from './components/MovieCard';
+import {useDebounce} from 'react-use';
 
 const App = ()=> {
 const [search, setSearch] = useState('');
 const [errorMessage, setErrorMessage] = useState('');
 const [movieList,setMovieList]=useState([]);
 const [isLoading,setIsLoading]=useState(false);
+const [debouncedSearch, setDebouncedSearch] = useState('');
 
+useDebounce(()=>setDebouncedSearch(search),1000,[search])
 
 const API_BASE_URL=`https://api.themoviedb.org/3`;
 const API_KEY=import.meta.env.VITE_TMDB_API_KEY;
@@ -20,11 +23,11 @@ const API_OPTIONS = {
 	  Authorization: `Bearer ${API_KEY}` 
 	}
   };
-const fetchMovies = async () =>{
+const fetchMovies = async (query='') =>{
 	setIsLoading(true);
 	setErrorMessage('');
 	try {
-		const endpoint=`${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
+		const endpoint=query?`${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}`:`${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
 		const response = await fetch(endpoint,API_OPTIONS);
 		if(!response.ok){
 			throw new Error('Failed to fetch movies')
@@ -46,8 +49,8 @@ const fetchMovies = async () =>{
 }
 
 useEffect(() => {
-  fetchMovies();
-}, [])
+  fetchMovies(debouncedSearch);
+}, [debouncedSearch])
 
   return (
 	<main>
